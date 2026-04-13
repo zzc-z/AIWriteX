@@ -35,14 +35,14 @@ platforms:
 publish_platform: wechat
 wechat:
   credentials:
-    - appid: ""
-      appsecret: ""
-      author: ""
+    - appid: "wxbece2054a0fa5239"
+      appsecret: "d3784fac8a4299b4ac3498221ec3aac6"
+      author: "AI前沿"
       call_sendall: false
       sendall: true
       tag_id: 0
 api:
-  api_type: OpenRouter
+  api_type: Gemini
   OpenRouter:
     key: OPENROUTER_API_KEY
     key_index: 0
@@ -104,7 +104,8 @@ api:
   Gemini:
     key: GEMINI_API_KEY
     key_index: 0
-    api_key: []
+    api_key:
+      - AIzaSyD2LLpExHGE07Z3-y4DXW0WG_nPe-u29l0
     model_index: 0
     model:
       - gemini/gemini-3-pro-preview
@@ -166,13 +167,16 @@ api:
     api_base: https://api.minimaxi.com/v1
     max_tokens: 32768
 img_api:
-  api_type: picsum
+  api_type: pollinations
   ali:
     api_key: ""
     model: wanx2.0-t2i-turbo
   picsum:
     api_key: ""
     model: ""
+  pollinations:
+    api_key: ""
+    model: flux
 use_template: true
 template_category: ""
 template: ""

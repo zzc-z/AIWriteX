@@ -226,9 +226,10 @@ class Config:
                 },
             },
             "img_api": {
-                "api_type": "picsum",
+                "api_type": "pollinations",
                 "ali": {"api_key": "", "model": "wanx2.0-t2i-turbo"},
                 "picsum": {"api_key": "", "model": ""},
+                "pollinations": {"api_key": "", "model": "flux"},
             },
             "use_template": True,
             "template_category": "",

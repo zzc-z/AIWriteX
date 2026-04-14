@@ -1,4 +1,5 @@
 import os
+import re
 import time
 from typing import Dict, Any
 
@@ -156,8 +157,10 @@ class UnifiedContentWorkflow:
             final_content = self._apply_dimensional_creative_transformation(base_content, **kwargs)
             log.print_log("[PROGRESS:CREATIVE:END]", "internal")
 
-            # 3. 转换处理（template或design）
+            # 2.5 自动匹配模板分类
+            self._auto_match_template_category(final_content, **kwargs)
 
+            # 3. 转换处理（template或design）
             transform_content = self._transform_content(final_content, publish_platform, **kwargs)
 
             # 4. 保存（非AI参与）
@@ -561,6 +564,39 @@ class UnifiedContentWorkflow:
             if workflow_metrics.get("success_rate", 0) < 0.8:  # 成功率低于80%
                 return False
         return True
+
+    _CATEGORY_KEYWORDS = {
+        "科技数码": ["AI", "人工智能", "芯片", "手机", "5G", "6G", "机器人", "编程", "代码", "软件", "硬件", "互联网", "苹果", "华为", "小米", "技术", "算法", "模型", "大模型", "显卡", "GPU", "CPU", "Cursor", "开发者", "操作系统"],
+        "财经投资": ["股票", "基金", "债券", "利率", "通胀", "GDP", "A股", "美股", "港股", "房价", "楼市", "汇率", "银行", "保险", "理财", "投资", "融资", "上市", "经济", "营收", "估值", "利润", "亏损", "涨价", "跌", "黄金", "金价", "央行", "存款", "贷款", "金融"],
+        "健康养生": ["健康", "医疗", "医院", "药", "疾病", "癌症", "肿瘤", "手术", "养生", "中医", "西医", "体检", "疫苗", "疫情", "病毒", "感染", "减肥", "饮食", "睡眠", "抑郁", "焦虑", "锻炼", "营养", "禁食", "断食", "空腹", "寿命", "心血管", "血压", "血糖"],
+        "教育学习": ["高考", "大学", "中考", "考研", "留学", "学校", "教育", "学生", "老师", "课程", "培训", "毕业", "招生", "考试", "分数", "录取", "专业", "排名", "清华", "北大", "211", "985"],
+        "美食旅行": ["美食", "旅游", "景点", "餐厅", "酒店", "机票", "攻略", "度假", "自驾", "小吃", "菜谱", "旅行", "出境", "民宿", "航班", "签证", "火锅", "奶茶"],
+        "时尚生活": ["穿搭", "美妆", "护肤", "时尚", "品牌", "奢侈", "潮流", "影视", "电影", "电视剧", "演唱会", "歌手", "造型", "时装", "珠宝"],
+        "情感心理": ["恋爱", "婚姻", "分手", "情感", "心理", "家庭", "亲子", "夫妻", "出轨", "离婚", "感情", "相亲", "幸福", "孤独", "爱情", "友情", "催婚", "父母", "婆媳", "原生家庭"],
+        "新闻时事": ["政府", "政策", "会议", "领导", "国际", "外交", "战争", "冲突", "选举", "总统", "制裁", "会谈", "访华", "公报", "声明", "法案", "协议", "联合国"],
+        "娱乐八卦": ["明星", "综艺", "热搜", "八卦", "绯闻", "网红", "直播", "粉丝", "娱乐圈", "偶像", "塌房", "代言", "恋情", "官宣"],
+        "职场发展": ["职场", "加班", "薪资", "面试", "求职", "辞职", "裁员", "996", "上班", "打工", "老板", "跳槽", "晋升", "五险一金", "社保", "劳动法", "简历"],
+    }
+
+    def _auto_match_template_category(self, content: ContentResult, **kwargs):
+        """根据文章内容自动匹配模板分类，仅在未指定分类时生效"""
+        config = Config.get_instance()
+
+        if config.custom_template_category or config.template_category:
+            return
+
+        text = (content.title or "") + (content.content or "")
+        scores = {
+            cat: sum(1 for kw in kws if re.search(re.escape(kw), text))
+            for cat, kws in self._CATEGORY_KEYWORDS.items()
+        }
+        scores = {k: v for k, v in scores.items() if v > 0}
+        if not scores:
+            return
+
+        best = max(scores, key=scores.get)
+        config.custom_template_category = best
+        log.print_log(f"自动匹配模板分类：{best}（匹配度 {scores[best]}）", "status")
 
     def register_platform_adapter(self, name: str, adapter):
         """注册新的平台适配器"""
